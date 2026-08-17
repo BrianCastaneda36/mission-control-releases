@@ -1,0 +1,37 @@
+{
+  "tag": "v8.41.0",
+  "title": "Mission Control v8.41.0 \u2014 themes, white-label, and a hardened Credit Repair system",
+  "notes_file": "incoming/NOTES.md",
+  "assets": [
+    {
+      "name": "MissionControl-8.41.0-x64.exe",
+      "sha256": "669ed86054eaa585648279d9fb9d78a5e0397ddb2d3ef3f082acad221c17e938",
+      "parts": 6
+    },
+    {
+      "name": "MissionControl-8.41.0-x64.exe.blockmap",
+      "sha256": "90f01a5b8001b452a1af65a76b52521cc479469d8f6f6d8c84ebc230e7f0591d",
+      "parts": 1
+    },
+    {
+      "name": "latest.yml",
+      "sha256": "cf176e0d0814191fc08e0cf145d1fafa0d4f13b71c74c34f7e86cae9c3a41e22",
+      "parts": 1
+    },
+    {
+      "name": "Haze-1.0.0-x64.exe",
+      "sha256": "f74658dc70117fa2cbfae7c5e5176745c6cd9902bd9177eea15fdc4328864805",
+      "parts": 6
+    },
+    {
+      "name": "Haze-1.0.0-x64.exe.blockmap",
+      "sha256": "f84168568ecb9fcb159333310c2e5a88a324180101c2f32e9942ca6c58beecc8",
+      "parts": 1
+    },
+    {
+      "name": "haze.yml",
+      "sha256": "22b21f1783804100b1d19f3ff76d078bf75d853e4b6e71bc95855e947aa42df7",
+      "parts": 1
+    }
+  ]
+}
