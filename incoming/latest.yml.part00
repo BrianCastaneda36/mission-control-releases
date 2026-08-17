@@ -1,0 +1,8 @@
+version: 8.41.0
+files:
+  - url: MissionControl-8.41.0-x64.exe
+    sha512: U/Ns1ZMEaTf7S3bXKKWUc16ZPbH+W7wqOCXjSi2k/TDadFPJ0dEozyU5EVi/7vNoV1FFHt2cZLOSEo3I/KMAdg==
+    size: 546033096
+path: MissionControl-8.41.0-x64.exe
+sha512: U/Ns1ZMEaTf7S3bXKKWUc16ZPbH+W7wqOCXjSi2k/TDadFPJ0dEozyU5EVi/7vNoV1FFHt2cZLOSEo3I/KMAdg==
+releaseDate: '2026-08-17T17:43:14.003Z'
