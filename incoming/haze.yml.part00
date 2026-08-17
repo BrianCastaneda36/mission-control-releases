@@ -1,0 +1,8 @@
+version: 1.0.0
+files:
+  - url: Haze-1.0.0-x64.exe
+    sha512: DOjoyi2sHGxONlbQSb48QJLSx3JtGamRX9M7tFM3BxkfkU4bcpSaAALR+8zdcx9JFRZNcMiIpkUu1tp/2+KCWQ==
+    size: 497611644
+path: Haze-1.0.0-x64.exe
+sha512: DOjoyi2sHGxONlbQSb48QJLSx3JtGamRX9M7tFM3BxkfkU4bcpSaAALR+8zdcx9JFRZNcMiIpkUu1tp/2+KCWQ==
+releaseDate: '2026-08-17T17:58:44.310Z'
