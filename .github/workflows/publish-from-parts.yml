@@ -1,0 +1,111 @@
+# Publish a release from split parts committed to incoming/.
+#
+# WHY THIS EXISTS
+# Release assets here are 400+ MB installers. The environments that BUILD them
+# (CI containers, remote sessions) can push git commits to this repo but have
+# no way to call the release-asset upload API, and git itself hard-rejects
+# files over 100 MB. So the builder splits each asset into <95 MB parts,
+# commits them under incoming/ with a manifest, and THIS workflow — running
+# with the repository's own token, which can create releases — reassembles,
+# verifies every byte against the manifest's SHA-256, publishes, and cleans up.
+#
+# The verification is not optional ceremony: a corrupted part would otherwise
+# become a corrupted installer served to every auto-updating install.
+#
+# incoming/manifest.json shape:
+# {
+#   "tag": "v8.41.0",
+#   "title": "Mission Control v8.41.0 — ...",
+#   "notes_file": "incoming/NOTES.md",
+#   "assets": [
+#     { "name": "MissionControl-8.41.0-x64.exe", "sha256": "...", "parts": 5 },
+#     { "name": "latest.yml", "sha256": "...", "parts": 1 }
+#   ]
+# }
+#
+# Parts are named <name>.part00, .part01, … in incoming/.
+
+name: publish-from-parts
+
+on:
+  push:
+    branches: [main]
+    paths: ['incoming/**']
+
+permissions:
+  contents: write # create the release + push the cleanup commit
+
+concurrency:
+  group: publish-from-parts
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stop early if there is nothing to publish
+        id: gate
+        run: |
+          if [ ! -f incoming/manifest.json ]; then
+            echo "no manifest — nothing to do (probably the cleanup commit)"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Reassemble and verify every asset
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p assembled
+          TAG=$(jq -r .tag incoming/manifest.json)
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          jq -c '.assets[]' incoming/manifest.json | while read -r asset; do
+            NAME=$(echo "$asset" | jq -r .name)
+            WANT=$(echo "$asset" | jq -r .sha256)
+            PARTS=$(echo "$asset" | jq -r .parts)
+            # cat in lexical order; part files are zero-padded so this is join order.
+            cat $(ls incoming/"$NAME".part* | sort) > "assembled/$NAME"
+            GOT=$(sha256sum "assembled/$NAME" | awk '{print $1}')
+            FOUND=$(ls incoming/"$NAME".part* | wc -l)
+            if [ "$FOUND" != "$PARTS" ]; then
+              echo "::error::$NAME: expected $PARTS parts, found $FOUND — refusing to publish"
+              exit 1
+            fi
+            if [ "$GOT" != "$WANT" ]; then
+              echo "::error::$NAME: sha256 mismatch — refusing to publish a corrupted asset"
+              echo "  want $WANT"
+              echo "  got  $GOT"
+              exit 1
+            fi
+            echo "OK  $NAME  ($GOT)"
+          done
+
+      - name: Create the release with all assets
+        if: steps.gate.outputs.run == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TITLE=$(jq -r .title incoming/manifest.json)
+          NOTES_FILE=$(jq -r '.notes_file // empty' incoming/manifest.json)
+          ARGS=(release create "$TAG" --title "$TITLE")
+          if [ -n "$NOTES_FILE" ] && [ -f "$NOTES_FILE" ]; then
+            ARGS+=(--notes-file "$NOTES_FILE")
+          else
+            ARGS+=(--notes "Published by publish-from-parts.")
+          fi
+          gh "${ARGS[@]}" assembled/*
+          echo "released $TAG"
+
+      - name: Remove the parts so the repo does not accrete gigabytes
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "publish-from-parts"
+          git config user.email "actions@github.com"
+          git rm -rq incoming
+          git commit -m "chore: parts for $TAG consumed and released"
+          git push
